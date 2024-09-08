@@ -6,17 +6,16 @@ export function generateSolidityCode(ast) {
   }
 
   const contractParts = [
-    generatePragma(),
+    generatePragma(ast),
     generateContractHeader(contractDef),
     ...contractDef.subNodes.map(generateNode),
     '}'
   ];
-  
+
   // console.log("Contract Parts: " + contractParts);
-  
+
   try {
     const result = contractParts.join('\n\n');
-    console.log("Generated Solidity Code:", result);
     return result;
   } catch (error) {
     console.error("Error joining contract parts:", error);
@@ -24,8 +23,13 @@ export function generateSolidityCode(ast) {
   }
 }
 
-function generatePragma() {
-  return 'pragma solidity 0.8.20;';
+function generatePragma(ast) {
+  const pragmaDirective = ast.children.find(child => child.type === 'PragmaDirective' && child.name === 'solidity');
+  if (pragmaDirective) {
+    return `pragma solidity ${pragmaDirective.value};`;
+  }
+  // fallback to a default version if not found in AST
+  return 'pragma solidity ^0.8.0;';
 }
 
 function generateContractHeader(contractDef) {
@@ -48,14 +52,58 @@ function generateStateVariable(node) {
   return `    ${variable.typeName.name} ${variable.name};`;
 }
 
+// function generateFunction(node) {
+//   const params = node.parameters ? node.parameters.map(p => `${p.typeName.name} ${p.name}`).join(', ') : '';
+//   const visibility = node.visibility || 'public';
+//   const stateMutability = node.stateMutability ? ` ${node.stateMutability}` : '';
+//   const returns = node.returnParameters && node.returnParameters.length > 0 ?
+//     ` returns (${node.returnParameters.map(p => p.typeName.name).join(', ')})` : '';
+
+//   return `    function ${node.name}(${params}) ${visibility}${stateMutability}${returns} {
+//         // Function body
+//     }`;
+// }
+
 function generateFunction(node) {
+  console.log("In generateFunction function")
+
   const params = node.parameters ? node.parameters.map(p => `${p.typeName.name} ${p.name}`).join(', ') : '';
   const visibility = node.visibility || 'public';
   const stateMutability = node.stateMutability ? ` ${node.stateMutability}` : '';
-  const returns = node.returnParameters && node.returnParameters.length > 0 ? 
+  const returns = node.returnParameters && node.returnParameters.length > 0 ?
     ` returns (${node.returnParameters.map(p => p.typeName.name).join(', ')})` : '';
-  
+
+  let body = '';
+  if (node.body && node.body.statements) {
+    body = node.body.statements.map(stmt => '        ' + generateStatement(stmt)).join('\n');
+  }
+
   return `    function ${node.name}(${params}) ${visibility}${stateMutability}${returns} {
-        // Function body
+${body}
     }`;
+}
+
+
+function generateStatement(statement) {
+  switch (statement.type) {
+    case 'ExpressionStatement':
+      return generateExpression(statement.expression) + ';';
+    case 'ReturnStatement':
+      return `return ${generateExpression(statement.expression)};`;
+    // add more cases as needed
+    default:
+      return `// Unsupported statement type: ${statement.type}`;
+  }
+}
+
+function generateExpression(expression) {
+  switch (expression.type) {
+    case 'BinaryOperation':
+      return `${generateExpression(expression.left)} ${expression.operator} ${generateExpression(expression.right)}`;
+    case 'Identifier':
+      return expression.name;
+    // add more cases as needed
+    default:
+      return `/* Unsupported expression type: ${expression.type} */`;
+  }
 }

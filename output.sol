@@ -1,15 +1,15 @@
-pragma solidity 0.8.20;
+pragma solidity 0.8.21;
 
 contract Storage {
 
     uint256 number;
 
     function store(uint256 num) public {
-        // Function body
+        number = num;
     }
 
     function retrieve() public view returns (uint256) {
-        // Function body
+        return number;
     }
 
 }

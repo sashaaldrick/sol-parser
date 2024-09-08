@@ -9,6 +9,7 @@ const fileContent = fs.readFileSync(filePath, 'utf8')
 try {
   const ast = parser.parse(fileContent)
   print_ast(ast)
+  console.log(JSON.stringify(ast, null, 2))
   
   console.log("====================================")
   console.log("Generating Solidity code from AST...")
