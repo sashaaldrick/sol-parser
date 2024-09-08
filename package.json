@@ -1,0 +1,14 @@
+{
+  "name": "sol-parser",
+  "module": "index.js",
+  "type": "module",
+  "devDependencies": {
+    "@types/bun": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^5.0.0"
+  },
+  "dependencies": {
+    "@solidity-parser/parser": "^0.18.0"
+  }
+}
